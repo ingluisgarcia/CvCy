@@ -2,23 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <title>Video en Realidad Aumentada</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/2.0.8/aframe/build/aframe-ar.js"></script>
 </head>
-<body>
-    <a-scene arjs>
-        <a-marker preset="hiro">
-            <a-entity position="0 0 0" scale="0.1 0.1 0.1">
-                <a-video src="https://www.youtube.com/embed/-jAJ6_izxq4?si=l9oDPj1qlihT6dnU" width="16" height="9" position="0 0 0" scale="1 1 1"></a-video>
-            </a-entity>
+<body style="margin: 0; overflow: hidden;">
+    <!-- Definir la escena de realidad aumentada -->
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+        
+        <!-- Agregar un marcador de tipo patrón -->
+        <a-marker type="pattern" url="path/to/pattern-marker.patt">
+        
+            <!-- Agregar un video en el marcador -->
+            <a-video src="Rencoroso.mp4" width="2" height="1.5"></a-video>
+        
         </a-marker>
-        <a-entity camera look-controls position="0 0 0"></a-entity>
+        
+        <!-- Entidad de la cámara para la realidad aumentada -->
+        <a-entity camera></a-entity>
+    
     </a-scene>
 </body>
 </html>
+
 
 <!--
 
