@@ -1,0 +1,630 @@
+¡Claro! Aquí tienes el código completo del juego de la serpiente. Puedes copiar este contenido y guardarlo en un archivo llamado index.html (o cualquier otro nombre con extensión .html). Luego, puedes subir este archivo a tu servicio de hosting.
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de la Serpiente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #2c3e50; /* Dark blue-grey background */
+            margin: 0;
+            font-family: 'Press Start 2P', cursive; /* Retro arcade font */
+            color: #ecf0f1; /* Light grey text */
+            overflow: hidden; /* Prevent scrollbars */
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            background-color: #34495e; /* Slightly lighter blue-grey for container */
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 90%; /* Responsive width */
+            width: 500px; /* Max width for desktop */
+        }
+
+        h1 {
+            color: #f1c40f; /* Yellow title */
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            background-color: #27ae60; /* Green game area */
+            border: 5px solid #2ecc71; /* Lighter green border */
+            border-radius: 8px;
+            display: block;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            width: 100%; /* Make canvas responsive */
+            max-width: 400px; /* Max width for canvas */
+            aspect-ratio: 1 / 1; /* Keep it square */
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            color: #ecf0f1;
+        }
+
+        .game-controls {
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap */
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        button, select {
+            background-color: #e67e22; /* Orange button */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+            flex-grow: 1; /* Allow buttons to grow */
+            min-width: 120px; /* Minimum width for buttons */
+            -webkit-appearance: none; /* Remove default select styling */
+            -moz-appearance: none;
+            appearance: none;
+            text-align: center;
+            text-align-last: center; /* Center text in dropdown */
+        }
+
+        button:hover, select:hover {
+            background-color: #d35400; /* Darker orange on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active, select:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .message-box {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            display: none; /* Hidden by default */
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            max-width: 80%;
+            font-size: 1.2em;
+        }
+
+        .message-box button {
+            margin-top: 15px;
+            background-color: #3498db; /* Blue button for message box */
+        }
+
+        .message-box button:hover {
+            background-color: #2980b9; /* Darker blue on hover */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.4em;
+            }
+            .game-info {
+                font-size: 0.9em;
+            }
+            button, select {
+                font-size: 0.9em;
+                padding: 10px 20px;
+            }
+            .game-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Juego de la Serpiente</h1>
+        <div class="game-info">
+            <div id="score">Puntos: 0</div>
+            <div id="level">Nivel: 1</div>
+            <div id="highScore">Puntaje Máximo: 0</div>
+        </div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div class="game-controls">
+            <select id="levelSelect">
+                <!-- Options will be populated by JavaScript -->
+            </select>
+            <button id="startButton">Iniciar Juego</button>
+            <button id="restartButton" style="display: none;">Reiniciar</button>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button id="messageBoxButton">OK</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const highScoreDisplay = document.getElementById('highScore');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const levelSelect = document.getElementById('levelSelect');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const messageBoxButton = document.getElementById('messageBoxButton');
+
+        const gridSize = 20; // Size of each square in the grid
+        let snake; // Snake position, now initialized in initGame
+        let food = {}; // Food position
+        let bonusFood = null; // Bonus food position, null when not active
+        let bonusFoodTimer = null; // Timer for bonus food disappearance
+        let bonusFoodStartTime = 0; // Timestamp when bonus food appeared
+        const bonusFoodDuration = 5000; // 5 seconds in milliseconds
+
+        let score = 0;
+        let highScore = 0; // Variable to store the high score
+        let currentLevel = 1; // Renamed 'level' to 'currentLevel' to avoid conflict with 'level' from select
+        let dx = 0; // Direction x
+        let dy = 0; // Direction y
+        let gameInterval;
+        let gameSpeed = 150; // Initial speed in ms (lower is faster)
+        let isGameOver = false;
+        let isGameStarted = false;
+        let changingDirection = false; // To prevent rapid direction changes
+        let pointsSinceLastBonus = 0; // Track points collected for bonus fruit
+
+        const maxLevel = 9;
+        const baseSpeed = 165; // Base speed for level 1
+        const speedDecrementPerLevel = 15; // How much speed increases per level (interval decreases)
+        const initialSnakeLength = 5; // Initial length of the snake
+        const localStorageHighScoreKey = 'snakeHighScore'; // Key for localStorage
+
+        // --- Game Functions ---
+
+        /**
+         * Populates the level selection dropdown.
+         */
+        function populateLevelSelect() {
+            for (let i = 1; i <= maxLevel; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Nivel ${i}`;
+                levelSelect.appendChild(option);
+            }
+            levelSelect.value = currentLevel; // Set initial selected level
+        }
+
+        /**
+         * Calculates the game speed based on the given level.
+         * @param {number} level - The desired game level.
+         * @returns {number} The calculated game speed in milliseconds.
+         */
+        function calculateGameSpeed(level) {
+            let speed = baseSpeed - (level - 1) * speedDecrementPerLevel;
+            return Math.max(speed, 50); // Ensure speed doesn't go below 50ms
+        }
+
+        /**
+         * Displays a message box to the user.
+         * @param {string} message - The message to display.
+         * @param {function} callback - Function to execute when the OK button is clicked.
+         */
+        function showMessageBox(message, callback) {
+            messageText.textContent = message;
+            messageBox.style.display = 'block';
+            messageBoxButton.onclick = () => {
+                messageBox.style.display = 'none';
+                if (callback) callback();
+            };
+        }
+
+        /**
+         * Initializes or resets the game state.
+         */
+        function initGame() {
+            clearInterval(gameInterval); // Stop any existing game loop
+            // Clear any pending bonus food timer
+            if (bonusFoodTimer) {
+                clearTimeout(bonusFoodTimer);
+                bonusFoodTimer = null;
+            }
+            bonusFood = null; // Ensure bonus food is cleared
+
+            // Initialize snake with desired initial length
+            snake = [];
+            for (let i = 0; i < initialSnakeLength; i++) {
+                snake.push({ x: 10 - i, y: 10 }); // Start snake horizontally to the left
+            }
+            food = {};
+            score = 0;
+            pointsSinceLastBonus = 0; // Reset bonus counter
+            currentLevel = parseInt(levelSelect.value); // Get selected level from dropdown
+            dx = 1; // Start moving right
+            dy = 0;
+            isGameOver = false;
+            changingDirection = false;
+            gameSpeed = calculateGameSpeed(currentLevel); // Set speed based on selected level
+
+            // Load high score from localStorage
+            const storedHighScore = localStorage.getItem(localStorageHighScoreKey);
+            if (storedHighScore) {
+                highScore = parseInt(storedHighScore);
+            } else {
+                highScore = 0;
+            }
+
+            updateScoreAndLevel(); // Update all displays
+            generateFood();
+            clearCanvas();
+            drawSnake();
+            drawFood();
+            startButton.style.display = 'block';
+            restartButton.style.display = 'none';
+            levelSelect.disabled = false; // Enable level selection
+            isGameStarted = false;
+        }
+
+        /**
+         * Starts the game loop.
+         */
+        function startGame() {
+            if (isGameStarted) return; // Prevent multiple starts
+            isGameStarted = true;
+            startButton.style.display = 'none';
+            restartButton.style.display = 'block';
+            levelSelect.disabled = true; // Disable level selection during game
+            gameInterval = setInterval(gameLoop, gameSpeed);
+        }
+
+        /**
+         * Clears the entire canvas.
+         */
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        /**
+         * Draws the snake on the canvas.
+         */
+        function drawSnake() {
+            snake.forEach((segment, index) => {
+                ctx.fillStyle = (index === 0) ? '#3498db' : '#2980b9'; // Head is blue, body is darker blue
+                ctx.strokeStyle = '#2c3e50'; // Dark border
+                ctx.lineWidth = 2;
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+                ctx.strokeRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+            });
+        }
+
+        /**
+         * Draws the food on the canvas.
+         */
+        function drawFood() {
+            ctx.fillStyle = '#e74c3c'; // Red food
+            ctx.strokeStyle = '#c0392b'; // Darker red border
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        /**
+         * Draws the bonus food on the canvas.
+         */
+        function drawBonusFood() {
+            if (bonusFood) {
+                ctx.fillStyle = '#f39c12'; // Orange bonus food
+                ctx.strokeStyle = '#e67e22'; // Darker orange border
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                // Draw a star shape or a more complex shape for bonus food
+                const centerX = bonusFood.x * gridSize + gridSize / 2;
+                const centerY = bonusFood.y * gridSize + gridSize / 2;
+                const outerRadius = gridSize / 2 * 0.9;
+                const innerRadius = gridSize / 2 * 0.4;
+                const numPoints = 5;
+
+                ctx.moveTo(centerX, centerY - outerRadius);
+                for (let i = 0; i < numPoints; i++) {
+                    let angle = Math.PI / numPoints * (2 * i + 1);
+                    ctx.lineTo(centerX + innerRadius * Math.sin(angle), centerY - innerRadius * Math.cos(angle));
+                    angle = Math.PI / numPoints * (2 * i + 2);
+                    ctx.lineTo(centerX + outerRadius * Math.sin(angle), centerY - outerRadius * Math.cos(angle));
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        /**
+         * Generates a new random position for the food, ensuring it doesn't overlap with the snake.
+         */
+        function generateFood() {
+            let newFoodX, newFoodY;
+            let collisionWithSnakeOrBonusFood;
+            do {
+                newFoodX = Math.floor(Math.random() * (canvas.width / gridSize));
+                newFoodY = Math.floor(Math.random() * (canvas.height / gridSize));
+                collisionWithSnakeOrBonusFood = snake.some(segment => segment.x === newFoodX && segment.y === newFoodY);
+                if (bonusFood) {
+                    collisionWithSnakeOrBonusFood = collisionWithSnakeOrBonusFood || (bonusFood.x === newFoodX && bonusFood.y === newFoodY);
+                }
+            } while (collisionWithSnakeOrBonusFood);
+
+            food = { x: newFoodX, y: newFoodY };
+        }
+
+        /**
+         * Generates a new random position for the bonus food.
+         */
+        function generateBonusFood() {
+            let newBonusFoodX, newBonusFoodY;
+            let collision;
+            do {
+                newBonusFoodX = Math.floor(Math.random() * (canvas.width / gridSize));
+                newBonusFoodY = Math.floor(Math.random() * (canvas.height / gridSize));
+                collision = snake.some(segment => segment.x === newBonusFoodX && segment.y === newBonusFoodY) ||
+                            (food.x === newBonusFoodX && food.y === newBonusFoodY);
+            } while (collision);
+
+            bonusFood = { x: newBonusFoodX, y: newBonusFoodY };
+            bonusFoodStartTime = Date.now(); // Record when it appeared
+
+            // Set a timeout for bonus food disappearance
+            bonusFoodTimer = setTimeout(() => {
+                bonusFood = null;
+                bonusFoodTimer = null;
+                // No need to redraw immediately, gameLoop will handle it
+            }, bonusFoodDuration);
+        }
+
+        /**
+         * Updates the score, level, and high score displays.
+         */
+        function updateScoreAndLevel() {
+            scoreDisplay.textContent = `Puntos: ${score}`;
+            levelDisplay.textContent = `Nivel: ${currentLevel}`;
+            highScoreDisplay.textContent = `Puntaje Máximo: ${highScore}`;
+        }
+
+        /**
+         * Moves the snake, handles wrap-around, and checks for collisions.
+         */
+        function moveSnake() {
+            if (isGameOver) return;
+
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+            // Handle wrap-around
+            if (head.x < 0) head.x = canvas.width / gridSize - 1;
+            if (head.x >= canvas.width / gridSize) head.x = 0;
+            if (head.y < 0) head.y = canvas.height / gridSize - 1;
+            if (head.y >= canvas.height / gridSize) head.y = 0;
+
+            // Check for self-collision
+            const collision = snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y);
+            if (collision) {
+                gameOver();
+                return;
+            }
+
+            snake.unshift(head); // Add new head
+
+            // Check if snake ate regular food
+            if (head.x === food.x && head.y === food.y) {
+                score += currentLevel; // Score increases by current level
+                pointsSinceLastBonus++; // Increment counter for bonus fruit
+                updateScoreAndLevel();
+                generateFood();
+
+                // Check for level up (if playing beyond initial selected level)
+                if (score >= currentLevel * 15 && currentLevel < maxLevel) {
+                    currentLevel++;
+                    gameSpeed = calculateGameSpeed(currentLevel); // Recalculate speed for new level
+                    clearInterval(gameInterval);
+                    gameInterval = setInterval(gameLoop, gameSpeed);
+                    showMessageBox(`¡Nivel ${currentLevel} alcanzado! Velocidad aumentada.`, null);
+                }
+            } else {
+                snake.pop(); // Remove tail if no food eaten
+            }
+
+            // Check if snake ate bonus food
+            if (bonusFood && head.x === bonusFood.x && head.y === bonusFood.y) {
+                const timeElapsed = Date.now() - bonusFoodStartTime;
+                const timeLeft = bonusFoodDuration - timeElapsed;
+                const bonusPoints = Math.floor((timeLeft / 1000) * currentLevel); // Convert ms to seconds, multiply by level
+                score += bonusPoints;
+                updateScoreAndLevel();
+
+                // Clear bonus food and its timer
+                bonusFood = null;
+                if (bonusFoodTimer) {
+                    clearTimeout(bonusFoodTimer);
+                    bonusFoodTimer = null;
+                }
+                pointsSinceLastBonus = 0; // Reset bonus counter after eating bonus food
+            }
+
+            changingDirection = false; // Allow direction change after movement
+        }
+
+        /**
+         * The main game loop function.
+         */
+        function gameLoop() {
+            if (isGameOver) {
+                clearInterval(gameInterval);
+                return;
+            }
+
+            // Check if it's time to generate bonus food
+            if (pointsSinceLastBonus >= 5 && bonusFood === null) {
+                generateBonusFood();
+                pointsSinceLastBonus = 0; // Reset counter after generating bonus food
+            }
+
+            clearCanvas();
+            drawFood();
+            drawBonusFood(); // Draw bonus food if active
+            moveSnake();
+            drawSnake();
+        }
+
+        /**
+         * Ends the game and displays a game over message.
+         */
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(gameInterval);
+            // Clear any pending bonus food timer
+            if (bonusFoodTimer) {
+                clearTimeout(bonusFoodTimer);
+                bonusFoodTimer = null;
+            }
+            bonusFood = null; // Ensure bonus food is cleared
+
+            // Update high score if current score is higher
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem(localStorageHighScoreKey, highScore); // Store in localStorage
+            }
+
+            showMessageBox(`¡Juego Terminado! Tu puntuación final es: ${score}.`, () => {
+                initGame(); // Reset game state after message box is closed
+            });
+        }
+
+        // --- Event Listeners ---
+
+        /**
+         * Handles keyboard input for snake direction.
+         * @param {KeyboardEvent} event - The keyboard event.
+         */
+        document.addEventListener('keydown', (event) => {
+            if (changingDirection || !isGameStarted) return; // Prevent rapid changes or if game not started
+
+            const keyPressed = event.key;
+            const goingUp = dy === -1;
+            const goingDown = dy === 1;
+            const goingLeft = dx === -1;
+            const goingRight = dx === 1;
+
+            if (keyPressed === 'ArrowLeft' && !goingRight) {
+                dx = -1;
+                dy = 0;
+                changingDirection = true;
+            } else if (keyPressed === 'ArrowUp' && !goingDown) {
+                dx = 0;
+                dy = -1;
+                changingDirection = true;
+            } else if (keyPressed === 'ArrowRight' && !goingLeft) {
+                dx = 1;
+                dy = 0;
+                changingDirection = true;
+            } else if (keyPressed === 'ArrowDown' && !goingUp) {
+                dx = 0;
+                dy = 1;
+                changingDirection = true;
+            }
+        });
+
+        // Touch controls (simple swipe detection)
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            e.preventDefault(); // Prevent scrolling
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevent scrolling while dragging
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (changingDirection || !isGameStarted) return;
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            const goingUp = dy === -1;
+            const goingDown = dy === 1;
+            const goingLeft = dx === -1;
+            const goingRight = dx === 1;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) { // Horizontal swipe
+                if (deltaX > 0 && !goingLeft) { // Swiped right
+                    dx = 1;
+                    dy = 0;
+                    changingDirection = true;
+                } else if (deltaX < 0 && !goingRight) { // Swiped left
+                    dx = -1;
+                    dy = 0;
+                    changingDirection = true;
+                }
+            } else { // Vertical swipe
+                if (deltaY > 0 && !goingUp) { // Swiped down
+                    dx = 0;
+                    dy = 1;
+                    changingDirection = true;
+                } else if (deltaY < 0 && !goingDown) { // Swiped up
+                    dx = 0;
+                    dy = -1;
+                    changingDirection = true;
+                }
+            }
+        });
+
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', initGame); // initGame will also stop the current game loop
+        levelSelect.addEventListener('change', initGame); // New: Reset game when level is changed
+
+        // Initial setup when the page loads
+        window.onload = function() {
+            populateLevelSelect(); // Populate the dropdown first
+            initGame(); // Then initialize the game with the default/selected level
+        };
+    </script>
+</body>
+</html>
+
